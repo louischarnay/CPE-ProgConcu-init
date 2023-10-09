@@ -1,6 +1,6 @@
-#include "dijkstra/dijkstra.h"
+#include "dijkstra/dijkstra.c"
 
 int main(int argc, char *argv[]) {
-    sem_delete(argv[1]);
+    sem_delete(atoi(argv[argc - 1]));
     return 0;
 }
