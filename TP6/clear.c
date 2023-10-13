@@ -4,6 +4,7 @@
 
 #define KEY 5942
 #define KEY_2 5943
+#define KEY_3 5944
 #define SIZE 4
 int main(void)
 {
@@ -17,5 +18,7 @@ int main(void)
     sem_delete(mutexId);
     int semId = sem_create(KEY_2, 0);
     sem_delete(semId);
+    int semId2 = sem_create(KEY_3, 0);
+    sem_delete(semId2);
     return 0;
 }
