@@ -1,29 +1,42 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <pthread.h>
 
-void *task(void *arg){
-    int r = rand() % 10;
-    sem_t *sem = arg;
-    puts("start task");
-    sleep(r);
-    pthread_barrier_wait(&barrier);
+#define N 6
+struct structArg
+{
+    pthread_barrier_t *barrier;
+    int id;
+};
+void *task1(void *arg)
+{
+    struct structArg *args = arg;
+    srand(getpid() + args->id);
+    int random = (rand() % 3) * args->id;
+    printf("Thread %d sleeping %d\n", args->id, random);
+    sleep(random);
+    printf("Thread %d wait others\n", args->id);
+    pthread_barrier_wait(args->barrier);
+    printf("Thread %d awake\n", args->id);
     return NULL;
 }
-
 int main(void)
 {
-    int n = 3;
     pthread_barrier_t barrier;
-    pthread_t thread[n];
-    for (int i = 0; i < n; i++)
+    pthread_barrier_init(&barrier, NULL, N);
+    pthread_t thread[N];
+    struct structArg args[N];
+    for (int i = 0; i < N; i++)
     {
-        pthread_create(&thread[i], NULL, task, &sem);
+        args[i].barrier = &barrier;
+        args[i].id = i + 1;
+        pthread_create(&thread[i], NULL, task1, &args[i]);
     }
-    for (int i = 0; i < n; i++)
+    for (int i = 0; i < N; i++)
     {
         pthread_join(thread[i], NULL);
     }
-    puts("start rendez-vous");
-    sem_destroy(&sem);
+    pthread_barrier_destroy(&barrier);
     return 0;
 }
