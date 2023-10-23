@@ -1,0 +1,8 @@
+---
+triple:          'arm64-apple-darwin'
+binary-path:     rdv
+relocations:
+  - { offsetInCU: 0x26, offset: 0x26, size: 0x8, addend: 0x0, symName: _task, symObjAddr: 0x0, symBinAddr: 0x100003D5C, symSize: 0x5C }
+  - { offsetInCU: 0x42, offset: 0x42, size: 0x8, addend: 0x0, symName: _task, symObjAddr: 0x0, symBinAddr: 0x100003D5C, symSize: 0x5C }
+  - { offsetInCU: 0x86, offset: 0x86, size: 0x8, addend: 0x0, symName: _main, symObjAddr: 0x5C, symBinAddr: 0x100003DB8, symSize: 0x164 }
+...
