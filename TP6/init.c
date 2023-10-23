@@ -12,7 +12,7 @@ int main(void)
     sem_create(KEY, 1);
     sem_create(KEY_2, SIZE);
     sem_create(KEY_3, 0);
-    int shmid = shmget(KEY, (SIZE+2) * sizeof(int), IPC_CREAT | IPC_EXCL | 0600);
+    int shmid = shmget(KEY, 3 * sizeof(int), IPC_CREAT | IPC_EXCL | 0600);
     if (shmid == -1)
     {
         perror("Shmget Memory");
