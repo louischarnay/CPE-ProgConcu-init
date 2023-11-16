@@ -1,2 +1,4 @@
 TP3/users
 .vscode
+**/*.dSYM
+.o
