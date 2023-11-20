@@ -6,7 +6,7 @@
 int toggle = 0;
 void on_exit(int sig){
     if(sig == SIGINT){
-        puts("Toggle");
+        puts("kill");
         toggle = !toggle;
     }
 }
@@ -28,7 +28,7 @@ int main(void){
     }
 
     int stat = kill(pid, SIGKILL);
-    
+
     if(stat == -1){
         perror("kill");
         return 1;
