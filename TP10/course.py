@@ -1,4 +1,5 @@
 import multiprocessing as mp
+import sys
 
 # Juin 2019
 # Cours hippique
@@ -110,44 +111,94 @@ def move_to(lig, col) : print("\033[" + str(lig) + ";" + str(col) + "f",end='')
 def en_couleur(Coul) : print(Coul,end='')
 def en_rouge() : print(CL_RED,end='') # Un exemple !
 
-
 # La tache d'un cheval
-def un_cheval(ma_ligne : int) : # ma_ligne commence à 0
+def un_cheval(ma_ligne : int, position, mutex, mutex1) : # ma_ligne commence à 0
     col=1
 
     while col < LONGEUR_COURSE and keep_running.value :
+        mutex1.acquire()
         move_to(ma_ligne+1,col)         # pour effacer toute ma ligne
         erase_line_from_beg_to_curs()
         en_couleur(lyst_colors[ma_ligne%len(lyst_colors)])
         print('('+chr(ord('A')+ma_ligne)+'>')
+        mutex1.release()
+
+        mutex.acquire()
+        position[ma_ligne] = col
+        mutex.release()
 
         col+=1
         time.sleep(0.1 * random.randint(1,5))
+
+# La tache de l'arbitre
+def arbitre(position, mutex, mutex1, vainqueur) :
+    premier = position[0]
+    dernier = LONGEUR_COURSE - position[0]
+
+    while keep_running.value :
+        mutex.acquire()
+        dernier = position[0]
+        for i in range(len(position)):
+            if position[i] > premier:
+                premier = position[i]
+                mutex1.acquire()
+                move_to(25, 1)
+                print("premier : {}".format(chr(ord('A')+i)))
+                vainqueur.value = i
+                mutex1.release()
+            if position[i] < dernier:
+                dernier = position[i]
+                mutex1.acquire()
+                move_to(26, 1)
+                print("dernier : {}".format(chr(ord('A')+i)))
+                if dernier == LONGEUR_COURSE - 1:
+                    keep_running.value = False
+                mutex1.release()
+        mutex.release()
 
 #------------------------------------------------
 # La partie principale :
 def course_hippique() :
     Nb_process=20
     mes_process = [0 for i in range(Nb_process)]
-    
 
+    position = mp.Array(ctypes.c_int, Nb_process)
+    vainqueur = mp.Value(ctypes.c_int, 0)
+
+    pari = 'B'
+
+    mutex = mp.Lock()
+    mutex1 = mp.Lock()
+    
+    mutex1.acquire()
     effacer_ecran()
     curseur_invisible()
+    mutex1.release()
 
     for i in range(Nb_process):  # Lancer     Nb_process  processus
-        mes_process[i] = Process(target=un_cheval, args= (i,))
+        mes_process[i] = Process(target=un_cheval, args= (i, position, mutex, mutex1))
         mes_process[i].start()
 
+    arbitre_process = Process(target=arbitre, args= (position, mutex, mutex1, vainqueur))
+    arbitre_process.start()
+
+    mutex1.acquire()
     move_to(Nb_process+10, 1)
     print("tous lancés")
-
-
+    mutex1.release()
 
     for i in range(Nb_process): mes_process[i].join()
 
-    move_to(24, 1)
+    arbitre_process.join()
+
+    mutex1.acquire()
+    move_to(Nb_process+11, 1)
+    if pari == chr(ord('A')+vainqueur.value):
+        print("Vous avez gagné !")
+    else:
+        print("Vous avez perdu !")
     curseur_visible()
-    print("Fini")
+    mutex1.release()
     
 # La partie principale :
 if __name__ == "__main__" :
