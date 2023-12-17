@@ -1,69 +1,96 @@
 #include <stdio.h>
-#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+#include <unistd.h>
 
-int main()
-{
-    int tubeNombre[2];
-    int tubeCompare[2];
+#define BUFF_SIZE 128
 
-    int resNombre = pipe(tubeNombre);
-    if (resNombre == -1) {
-        perror("Création Pipe");
-        exit(-1);
-    }
+int main(void){
+	srand(time(NULL));
 
-    int resCompare = pipe(tubeCompare);
-    if (resCompare == -1) {
-        perror("Création Pipe");
-        exit(-1);
-    }
+	int tube1[2];
+	int tube2[2];
+	int pipe_stat = pipe(tube1);
+	int pipe_stat2 = pipe(tube2);
 
-    if (fork() == 0) {
-        srand(getpid());
-        int random = rand() % 50;
-        int guess = 0;
+	if(pipe_stat == -1 || pipe_stat2 == -1){
+		puts("Error creating pipe");
+		exit(-1);
+	}
 
-        close(tubeNombre[1]);
-        close(tubeCompare[0]);
+	int child = fork();
 
-        while (guess != random)
-        {   
-            read(tubeNombre[0], &guess, sizeof(int)); // Lecture depuis le tube
+	if(!child){
+		close(tube1[1]);
+		close(tube2[0]);
+		int guess = 0;
+		int secret = rand() % 101;
+		char state = 'i';
 
-            if (guess == random) {
-                write(tubeCompare[1], "=", sizeof(char)); // Écriture dans le tube
-            } else if (guess > random) {
-                write(tubeCompare[1], "-", sizeof(char)); // Écriture dans le tube
-            } else {
-                write(tubeCompare[1], "+", sizeof(char)); // Écriture dans le tube
-            }
-        }
-        close(tubeNombre[0]);
-        close(tubeCompare[1]);
-    }
-    
-    else {
-        int guess = 0;
-        char compare = ' ';
+		while(1){
 
-        close(tubeNombre[0]);
-        close(tubeCompare[1]);
+			read(tube1[0], &guess, sizeof(int));
 
-        while (compare != '=')
-        {
-            printf("Enter your guess:\n");
-            scanf("%d", &guess);
-            
-            write(tubeNombre[1], &guess, sizeof(int)); // Écriture dans le tube
-            
-            read(tubeCompare[0], &compare, sizeof(char)); // Lecture depuis le tube
+			if(secret > guess){
+				state = 'g';
+				write(tube2[1], &state, sizeof(char));
+			} else if(secret < guess){
+				state = 's';
+				write(tube2[1], &state, sizeof(char));
+			} else {
+				break;
+			}
+		}
+		
+		state = 'w';
+		write(tube2[1], &state, sizeof(char));
 
-            printf("Compare: %c\n", compare);
-        }
-        close(tubeNombre[1]);
-        close(tubeCompare[0]);
-    }
-    return 0;
+		close(tube1[0]);
+		close(tube2[1]);
+
+	} else {
+		close(tube1[0]);
+		close(tube2[1]);
+
+		char input[BUFF_SIZE];
+		int num = 0;
+		int won = 'f';
+
+		while(1){
+			
+			puts("Entrer un mot (limite 128 char): ");
+			fgets(input, BUFF_SIZE, stdin);
+			
+			
+			if(sscanf(input, "%d", &num) < 0){
+				puts("not a number");
+				continue;
+			}
+
+			write(tube1[1], &num, sizeof(int));
+
+			read(tube2[0], &won, sizeof(char));
+
+			if(won == 's'){
+				puts("It's smaller");
+			} else if(won == 'g'){
+				puts("It's greater");
+			}else {
+				if(won == 'w'){
+					puts("You won");
+					break;
+				} else {
+					printf("Undefined %c\n", won);
+				}
+			}
+
+		}
+
+		close(tube1[1]);
+		close(tube2[0]);
+
+	}
+
+	return 0;
 }

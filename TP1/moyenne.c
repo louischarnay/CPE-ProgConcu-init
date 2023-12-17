@@ -9,7 +9,7 @@ int main(int argc, char* argv[]){
 
     if (argc > 1) {
         for (int i = 1; i < argc; i++){
-            if(sscanf(argv[i], "%d", &tmp) !=1 || tmp < 0 || tmp > 20){
+            if(sscanf(argv[i], "%d", &tmp) != 1 || tmp < 0 || tmp > 20){
                 printf("Notes non valide(s)\n");
                 return 1;   
             } else {

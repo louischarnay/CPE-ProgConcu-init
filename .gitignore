@@ -1,4 +1,9 @@
 .vscode
-
+*.o
+*.obj
+*.*
+!*/
+!*.**
 *.dSYM
 *.out
+*.DS_Store
